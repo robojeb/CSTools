@@ -1,0 +1,63 @@
+CLANG_LOCATION := /cs/cs70/clang+llvm-3.4-r196716-x86_64-linux-gentoo
+
+LLVM_SRC_PATH := $$HOME/clang-svn/llvm
+LLVM_BUILD_PATH := $$HOME/clang-svn/build
+LLVM_BIN_PATH := $(CLANG_LOCATION)/bin
+#$(LLVM_BUILD_PATH)/Debug+Asserts/bin
+
+
+
+$(info -----------------------------------------------)
+$(info Using LLVM_SRC_PATH = $(LLVM_SRC_PATH))
+$(info Using LLVM_BUILD_PATH = $(LLVM_BUILD_PATH))
+$(info Using LLVM_BIN_PATH = $(LLVM_BIN_PATH))
+$(info -----------------------------------------------)
+
+CLANG_INCLUDES := \
+	-I$(CLANG_LOCATION)/include
+#	-I$(LLVM_SRC_PATH)/tools/clang/include \
+#	-I$(LLVM_BUILD_PATH)/tools/clang/include
+#	-I$(LLVM_SRC_PATH)/include \
+#	-I$(LLVM_BUILD_PATH)/include
+
+LLVM_CXXFLAGS := `$(LLVM_BIN_PATH)/llvm-config --cxxflags`
+LLVM_LDFLAGS := `$(LLVM_BIN_PATH)/llvm-config --ldflags --libs`
+LLVM_LDFLAGS_NOLIBS := `$(LLVM_BIN_PATH)/llvm-config --ldflags`
+
+CLANG_LIBS := \
+	-lclangFrontendTool \
+	-lclangFrontend \
+	-lclangDriver \
+	-lclangSerialization \
+	-lclangCodeGen \
+	-lclangParse \
+	-lclangSema \
+	-lclangRewriteFrontend \
+	-lclangRewriteCore \
+	-lclangStaticAnalyzerFrontend \
+	-lclangStaticAnalyzerCheckers \
+	-lclangStaticAnalyzerCore \
+	-lclangARCMigrate \
+	-lclangAnalysis \
+	-lclangEdit \
+	-lclangAST \
+	-lclangLex \
+	-lclangBasic
+
+CXX := $(CLANG_LOCATION)/bin/clang++
+#clang++
+CXXFLAGS := -fno-rtti -O0 -std=c++11
+
+all: replacer
+
+replacer: replacer.o extractor.o
+	$(CXX) $^ $(CLANG_LIBS) $(LLVM_LDFLAGS) -o $@
+
+replacer.o: replacer.cpp extractor.hpp
+	$(CXX) $(CXXFLAGS) -c $(LLVM_CXXFLAGS) $(CLANG_INCLUDES) $< -o $@
+
+extractor.o: extractor.cpp extractor.hpp
+	$(CXX) $(CXXFLAGS) -c $(LLVM_CXXFLAGS) $(CLANG_INCLUDES) $< -o $@
+
+clean:
+	rm replacer extractor replacer.o extractor.o
