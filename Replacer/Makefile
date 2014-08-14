@@ -1,5 +1,5 @@
-LLVM_SRC_PATH := $$HOME/Sources/llvm
-LLVM_BUILD_PATH := $$HOME/Sources/build
+LLVM_SRC_PATH := $$HOME/clang-svn/llvm
+LLVM_BUILD_PATH := $$HOME/clang-svn/build
 LLVM_BIN_PATH := $(LLVM_BUILD_PATH)/Debug+Asserts/bin
 
 $(info -----------------------------------------------)
@@ -19,25 +19,24 @@ LLVM_LDFLAGS := `$(LLVM_BIN_PATH)/llvm-config --ldflags --libs --system-libs`
 LLVM_LDFLAGS_NOLIBS := `$(LLVM_BIN_PATH)/llvm-config --ldflags`
 
 CLANG_LIBS := \
-	-lclangAST \
-	-lclangAnalysis \
-	-lclangBasic \
-	-lclangDriver \
-	-lclangEdit \
-	-lclangFrontend \
 	-lclangFrontendTool \
-	-lclangLex \
+	-lclangFrontend \
+	-lclangDriver \
+	-lclangSerialization \
+	-lclangCodeGen \
 	-lclangParse \
 	-lclangSema \
-	-lclangEdit \
-	-lclangASTMatchers \
-	-lclangRewrite \
 	-lclangRewriteFrontend \
+	-lclangRewrite \
 	-lclangStaticAnalyzerFrontend \
 	-lclangStaticAnalyzerCheckers \
 	-lclangStaticAnalyzerCore \
-	-lclangSerialization \
-	-lclangTooling
+	-lclangARCMigrate \
+	-lclangAnalysis \
+	-lclangEdit \
+	-lclangAST \
+	-lclangLex \
+	-lclangBasic
 
 CXX := clang++
 CXXFLAGS := -fno-rtti -O0 -std=c++11
