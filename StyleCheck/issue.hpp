@@ -1,6 +1,7 @@
 #ifndef ISSUE_HPP_INC
 #define ISSUE_HPP_INC
 
+#include <string>
 #include "severity.hpp"
 
 class Issue{
@@ -8,7 +9,8 @@ public:
   Issue(int line, int col, std::string title,
         std::string message, severity_t severity);
 
-  Issue(std::string title, std::string message, severity_t severity);
+  Issue(std::string title, std::string message, severity_t severity):
+    Issue(-1, -1, title, message, severity) {};
 
   int getLine() const;
 
@@ -19,6 +21,7 @@ public:
   std::string getMessage() const;
 
   severity_t getSeverity() const;
+
 
 private:
   int line_;
