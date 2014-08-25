@@ -44,13 +44,16 @@ CXXFLAGS := -fno-rtti -O0 -std=c++11
 
 all: stylecheck
 
-stylecheck: stylecheck.o issue.o
+stylecheck: stylecheck.o varcheck.o issue.o
 	$(CXX) $^ $(CLANG_LIBS) $(BOOST_LIBS) $(LLVM_LDFLAGS) -o $@
 
 issue.o: issue.cpp issue.hpp
 	$(CXX) $(CXXFLAGS) -c $(LLVM_CXXFLAGS) $(CLANG_INCLUDES) $< -o $@
 
-stylecheck.o: stylecheck.cpp
+stylecheck.o: stylecheck.cpp issue.hpp varcheck.hpp
+	$(CXX) $(CXXFLAGS) -c $(LLVM_CXXFLAGS) $(CLANG_INCLUDES) $< -o $@
+
+varcheck.o: varcheck.cpp varcheck.hpp issue.hpp
 	$(CXX) $(CXXFLAGS) -c $(LLVM_CXXFLAGS) $(CLANG_INCLUDES) $< -o $@
 
 clean:

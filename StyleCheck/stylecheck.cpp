@@ -6,9 +6,11 @@
 #include <vector>
 #include <boost/regex.hpp>
 #include <boost/throw_exception.hpp>
+#include <algorithm>
 
 #include "issue.hpp"
 #include "severity.hpp"
+#include "varcheck.hpp"
 
 using namespace std;
 
@@ -18,6 +20,10 @@ namespace boost {
 void throw_exception(std::exception const & e) {
   cout << "THINGS BROKE" << endl;
 }
+}
+
+bool linesort(Issue a, Issue b){
+  return a.getLine() < b.getLine();
 }
 
 
@@ -51,6 +57,8 @@ int main(int argc, char** argv) {
 
   boost::regex hppRegex{"\\.hpp"};
 
+  boost::regex privateRegex{"-private.hpp"};
+
   //Do all line based regex style stuff
   int lineNo = 1;
   string line;
@@ -70,7 +78,7 @@ int main(int argc, char** argv) {
 
     if (boost::regex_search(line, m, thisRegex)) {
       lineIssues.push_back(Issue(lineNo, m.position(int(0)),
-      "Unneeded this", "Inside member functions you don't need to use this",
+      "Unneeded this", "Member functions you don't need to use this",
       WARNING));
     }
 
@@ -86,18 +94,33 @@ int main(int argc, char** argv) {
     string fileContents{istreambuf_iterator<char>{fileStream},
                         istreambuf_iterator<char>{}};
 
-    boost::regex incGuardRegex{"#ifndef *([A-Z_]+).*\n#define *([A-Z_]+)"};
 
-    if(!boost::regex_search(fileContents, incGuardRegex)){
-      fileIssues.push_back(Issue("Missing include guards",
-      "hpp files should contain include guards to prevent double includes",
+    if(!boost::regex_search(filename, privateRegex)){
+      boost::regex incGuardRegex{"#ifndef *([A-Z_]+).*\n#define *([A-Z_]+)"};
+
+      if(!boost::regex_search(fileContents, incGuardRegex)){
+        fileIssues.push_back(Issue("Missing include guards",
+        "hpp files should contain include guards to prevent double includes",
+        ERROR));
+      }
+    }
+
+    boost::regex usingRegex{"using namespace .*"};
+
+    if(boost::regex_search(fileContents, usingRegex)){
+      fileIssues.push_back(Issue("using directive in header",
+      "Using directives should not appear in header files",
       ERROR));
     }
   }
 
+  //Use clang to check variable names
+  checkVariables(filename, lineIssues);
 
-  //TODO: Produce output based on the issues we found
-  //TODO: Sort line issues
+  //Sort the issues by line number
+  sort(lineIssues.begin(), lineIssues.end(), linesort);
+
+  //Produce either terminal or HTML output
   if (!HTMLoutput) {
     for (auto issue:fileIssues) {
       if (issue.getSeverity() == WARNING) {

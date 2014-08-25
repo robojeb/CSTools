@@ -22,7 +22,6 @@ public:
 
   severity_t getSeverity() const;
 
-
 private:
   int line_;
   int column_;
