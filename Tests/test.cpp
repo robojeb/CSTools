@@ -1,10 +1,10 @@
 void foo(){
   int x;
-  double right;
+  double okay;
   float thisIsOkay;
 }
 
 struct test {
   int thing_;
-  static const int static_;
+  static const int STATIC_VARIABLE;
 };

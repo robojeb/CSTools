@@ -90,9 +90,11 @@ bool VarCheckVisitor::VisitVarDecl(VarDecl *v)
       WARNING));
     }
   } else if (v->isStaticDataMember()){
-    //Nothing to do unless we can figure out how to find constness
+    //Get the type of the variable so we can check if it is constant
     clang::QualType type = v->getType();
     if (type.isConstQualified()) {
+      //If it is constant and static it must conform to the CONST_VAR naming
+      //convention
       boost::regex r{CONST_VAR};
       if (!boost::regex_match(name, r)) {
         lineIssues_.push_back(Issue(-1, -1,
