@@ -91,6 +91,16 @@ bool VarCheckVisitor::VisitVarDecl(VarDecl *v)
     }
   } else if (v->isStaticDataMember()){
     //Nothing to do unless we can figure out how to find constness
+    clang::QualType type = v->getType();
+    if (type.isConstQualified()) {
+      boost::regex r{CONST_VAR};
+      if (!boost::regex_match(name, r)) {
+        lineIssues_.push_back(Issue(-1, -1,
+        "Incorrect Static Constant Variable Name",
+        "Static constant variables should be in all caps with underscores.",
+        WARNING));
+      }
+    }
   }
   return true;
 }
