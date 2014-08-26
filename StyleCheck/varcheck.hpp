@@ -34,8 +34,6 @@ class VarCheckVisitor : public clang::RecursiveASTVisitor<VarCheckVisitor> {
 public:
   VarCheckVisitor(std::vector<Issue>& lineIssues, clang::SourceManager& sm);
 
-  bool VisitVarDecl(clang::VarDecl *v);
-
   bool VisitDecl(clang::Decl *d);
 
 private:
@@ -43,6 +41,17 @@ private:
   clang::SourceManager& sm_;
 
   std::pair<int, int> getDeclLocation(clang::Decl* d);
+
+  //Check functions for various declarations
+  void checkField(clang::Decl* d);
+
+  void checkVariable(clang::Decl* d);
+
+  //This also doubles for checking methods because they are a subclass and
+  //Currently have the same naming convention
+  void checkFunction(clang::Decl* d);
+
+  void checkClass(clang::Decl* d);
 };
 
 #endif

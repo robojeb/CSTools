@@ -81,9 +81,45 @@ VarCheckVisitor::VarCheckVisitor(vector<Issue>& lineIssues,
   //Nothing to do
 }
 
-bool VarCheckVisitor::VisitVarDecl(VarDecl *v)
+bool VarCheckVisitor::VisitDecl(Decl *d)
 {
-  auto loc = getDeclLocation(v);
+  string type{d->getDeclKindName()};
+
+  if (type == "Field") {
+    checkField(d);
+  } else if (type == "Var") {
+    checkVariable(d);
+  } else if (type == "CXXRecord") {
+    checkClass(d);
+  } else if (type == "CXXMethod" || type == "Function") {
+    //Check method names
+  } else if (type == "UsingDirective") {
+    //We should do stuff if this is a header file
+  }
+
+  return true;
+}
+
+void VarCheckVisitor::checkField(clang::Decl* d)
+{
+  auto loc = getDeclLocation(d);
+
+  FieldDecl* f = (FieldDecl*)d;
+  string name = f->getName();
+  boost::regex r{MEMBER_VAR};
+
+  if(!boost::regex_match(name, r)) {
+    lineIssues_.push_back(Issue(loc.first,loc.second,"Incorrect Field Name",
+    "Field names should be in lower camel case with a trailing underscore.",
+    WARNING));
+  }
+}
+
+void VarCheckVisitor::checkVariable(clang::Decl* d)
+{
+  auto loc = getDeclLocation(d);
+
+  VarDecl* v = (VarDecl*)d;
 
   string name = v->getName();
   if (v->isLocalVarDecl()) {
@@ -109,27 +145,42 @@ bool VarCheckVisitor::VisitVarDecl(VarDecl *v)
       }
     }
   }
-  return true;
 }
 
-bool VarCheckVisitor::VisitDecl(Decl *d)
+void VarCheckVisitor::checkFunction(clang::Decl* d)
 {
   auto loc = getDeclLocation(d);
 
-  string type{d->getDeclKindName()};
-  if (type == "Field") {
-    FieldDecl* f = (FieldDecl*)d;
-    string name = f->getName();
-    boost::regex r{MEMBER_VAR};
+  FunctionDecl* v = (FunctionDecl*)d;
 
-    if(!boost::regex_match(name, r)) {
-      lineIssues_.push_back(Issue(loc.first,loc.second,"Incorrect Field Name",
-      "Field names should be in lower camel case with a trailing underscore.",
-      WARNING));
-    }
+  string name = v->getName();
+
+  boost::regex r{LOCAL_VAR};
+
+  if (!boost::regex_match(name, r)){
+    lineIssues_.push_back(Issue(loc.first, loc.second,
+    "Incorrect Function/Method name",
+    "Functions and Methods should be in lower camel case.",
+    WARNING));
   }
+}
 
-  return true;
+void VarCheckVisitor::checkClass(clang::Decl* d)
+{
+  auto loc = getDeclLocation(d);
+
+  CXXRecordDecl* c = (CXXRecordDecl*)d;
+
+  string name = c->getName();
+
+  boost::regex r{CLASS_NAME};
+
+  if(!boost::regex_match(name, r)){
+    lineIssues_.push_back(Issue(loc.first, loc.second,
+    "Incorrect Class/Struct name",
+    "Classes and Structures should be named in upper camel case.",
+    WARNING));
+  }
 }
 
 pair<int, int> VarCheckVisitor::getDeclLocation(clang::Decl* d)
