@@ -10,7 +10,7 @@
 
 #include "issue.hpp"
 #include "severity.hpp"
-#include "varcheck.hpp"
+#include "declcheck.hpp"
 
 using namespace std;
 
@@ -115,7 +115,7 @@ int main(int argc, char** argv) {
   }
 
   //Use clang to check variable names
-  checkVariables(filename, lineIssues);
+  checkDecls(filename, lineIssues);
 
   //Sort the issues by line number
   sort(lineIssues.begin(), lineIssues.end(), linesort);
@@ -128,7 +128,7 @@ int main(int argc, char** argv) {
       }else {
         cout << "[ERROR]: ";
       }
-      cout << issue.getTitle() << endl << issue.getMessage() << endl;
+      cout << issue.getTitle() << endl << issue.getMessage() << endl << endl;
     }
 
     for (auto issue:lineIssues) {
@@ -137,7 +137,7 @@ int main(int argc, char** argv) {
       }else {
         cout << "[ERROR]: (" << issue.getLine() << "," << issue.getColumn() << ") ";
       }
-      cout << issue.getTitle() << endl << issue.getMessage() << endl;
+      cout << issue.getTitle() << endl << issue.getMessage() << endl << endl;
     }
   } else {
     for (auto issue:fileIssues) {

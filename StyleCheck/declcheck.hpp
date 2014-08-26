@@ -30,7 +30,7 @@ const std::string CLASS_NAME = "[A-Z][a-zA-Z]";
 
 void checkDecls(std::string filename, std::vector<Issue>& lineIssues);
 
-class DeclCheckVisitor : public clang::RecursiveASTVisitor<VarCheckVisitor> {
+class DeclCheckVisitor : public clang::RecursiveASTVisitor<DeclCheckVisitor> {
 public:
   DeclCheckVisitor(std::vector<Issue>& lineIssues, clang::SourceManager& sm);
 
