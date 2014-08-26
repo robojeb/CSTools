@@ -10,8 +10,8 @@ using namespace clang;
 // by the Clang parser.
 class MyASTConsumer : public ASTConsumer {
 public:
-  MyASTConsumer(vector<Issue>& lineIssues) :
-    Visitor(lineIssues) {}
+  MyASTConsumer(vector<Issue>& lineIssues, clang::SourceManager& sm) :
+    Visitor(lineIssues, sm) {}
 
   // Override the method that gets called for each parsed top-level
   // declaration.
@@ -67,25 +67,30 @@ void checkVariables(string filename, vector<Issue>& lineIssues){
   TheCompInst.getDiagnosticClient().BeginSourceFile(
       TheCompInst.getLangOpts(), &TheCompInst.getPreprocessor());
 
-  MyASTConsumer consm{lineIssues};
+  MyASTConsumer consm{lineIssues, SourceMgr};
 
   ParseAST(TheCompInst.getPreprocessor(), &consm, TheCompInst.getASTContext());
 }
 
 
-VarCheckVisitor::VarCheckVisitor(vector<Issue>& lineIssues):
-  lineIssues_{lineIssues}
+VarCheckVisitor::VarCheckVisitor(vector<Issue>& lineIssues,
+                                  clang::SourceManager& sm):
+  lineIssues_{lineIssues},
+  sm_{sm}
 {
   //Nothing to do
 }
 
 bool VarCheckVisitor::VisitVarDecl(VarDecl *v)
 {
+  auto loc = getDeclLocation(v);
+
   string name = v->getName();
   if (v->isLocalVarDecl()) {
     boost::regex r{LOCAL_VAR};
     if (!boost::regex_match(name, r)){
-      lineIssues_.push_back(Issue(-1,-1,"Incorrect Local Variable Name",
+      lineIssues_.push_back(Issue(loc.first, loc.second,
+      "Incorrect Local Variable Name",
       "Local variable names should be in lower camel case.",
       WARNING));
     }
@@ -97,7 +102,7 @@ bool VarCheckVisitor::VisitVarDecl(VarDecl *v)
       //convention
       boost::regex r{CONST_VAR};
       if (!boost::regex_match(name, r)) {
-        lineIssues_.push_back(Issue(-1, -1,
+        lineIssues_.push_back(Issue(loc.first, loc.second,
         "Incorrect Static Constant Variable Name",
         "Static constant variables should be in all caps with underscores.",
         WARNING));
@@ -109,6 +114,8 @@ bool VarCheckVisitor::VisitVarDecl(VarDecl *v)
 
 bool VarCheckVisitor::VisitDecl(Decl *d)
 {
+  auto loc = getDeclLocation(d);
+
   string type{d->getDeclKindName()};
   if (type == "Field") {
     FieldDecl* f = (FieldDecl*)d;
@@ -116,11 +123,34 @@ bool VarCheckVisitor::VisitDecl(Decl *d)
     boost::regex r{MEMBER_VAR};
 
     if(!boost::regex_match(name, r)) {
-      lineIssues_.push_back(Issue(-1,-1,"Incorrect Field Name",
+      lineIssues_.push_back(Issue(loc.first,loc.second,"Incorrect Field Name",
       "Field names should be in lower camel case with a trailing underscore.",
       WARNING));
     }
   }
 
   return true;
+}
+
+pair<int, int> VarCheckVisitor::getDeclLocation(clang::Decl* d)
+{
+    clang::SourceLocation sl = d->getLocation();
+    string s = sl.printToString(sm_);
+
+    boost::regex r{"[.\\/a-zA-Z]*:([0-9]+):([0-9]+)"};
+
+    boost::smatch m;
+
+    if(boost::regex_match(s, m, r)){
+      auto colM = m[1];
+      auto rowM = m[2];
+
+      int col = atoi(colM.str().c_str());
+      int row = atoi(rowM.str().c_str());
+
+      return pair<int, int>{col, row};
+    } else {
+      return pair<int, int>{-1, -1};
+    }
+
 }

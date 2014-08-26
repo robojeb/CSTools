@@ -32,7 +32,7 @@ void checkVariables(std::string filename, std::vector<Issue>& lineIssues);
 
 class VarCheckVisitor : public clang::RecursiveASTVisitor<VarCheckVisitor> {
 public:
-  VarCheckVisitor(std::vector<Issue>& lineIssues);
+  VarCheckVisitor(std::vector<Issue>& lineIssues, clang::SourceManager& sm);
 
   bool VisitVarDecl(clang::VarDecl *v);
 
@@ -40,6 +40,9 @@ public:
 
 private:
   std::vector<Issue>& lineIssues_;
+  clang::SourceManager& sm_;
+
+  std::pair<int, int> getDeclLocation(clang::Decl* d);
 };
 
 #endif
